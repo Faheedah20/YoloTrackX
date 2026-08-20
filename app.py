@@ -191,10 +191,17 @@ def render_sidebar():
     )
     model_path = models[model_label]
 
-    if st.session_state.model is None or st.session_state.model_name != model_path:
-        with st.spinner(f"Loading {model_label}…"):
-            st.session_state.model = load_model(model_path)
-            st.session_state.model_name = model_path
+    if st.session_state.model_name != model_path:
+        st.session_state.model = None
+
+    if st.session_state.model is None:
+        st.sidebar.info("Load a YOLO model to enable detection.")
+        if st.sidebar.button("Load model", type="primary"):
+            with st.spinner(f"Loading {model_label}…"):
+                st.session_state.model = load_model(model_path)
+                st.session_state.model_name = model_path
+            st.rerun()
+        return None
 
     conf = st.sidebar.slider(
         "Confidence threshold",
@@ -474,6 +481,9 @@ def render_class_chart(class_counts: Dict[str, int]):
 def main():
     render_header()
     cfg = render_sidebar()
+    if cfg is None:
+        st.info("Use the sidebar to load a YOLO model before starting detection.")
+        return
 
     tab_image, tab_video, tab_webcam, tab_about = st.tabs(
         ["🖼️ Image", "🎬 Video", "📷 Webcam", "ℹ️ About"]
