@@ -191,6 +191,11 @@ def render_sidebar():
     )
     model_path = models[model_label]
 
+    if model_path in {"yolov8l.pt", "yolov8x.pt"}:
+        st.sidebar.warning(
+            "Large models are slower. Use YOLOv8 Nano for webcam and real-time work."
+        )
+
     if st.session_state.model_name != model_path:
         st.session_state.model = None
 
@@ -634,68 +639,64 @@ def main():
 
     # ------------------------------------------------------------------ Webcam
     with tab_webcam:
-        st.subheader("Webcam (local)")
+        st.subheader("Webcam Capture")
         st.markdown(
-            "Click **Start** to open your default webcam. "
-            "Press **Stop** when finished. Tracking works across consecutive frames."
+            "Allow camera access, capture a frame, then run detection on the image. "
+            "This browser-native capture works locally and on deployed Streamlit apps."
         )
-        st.warning(
-            "Webcam access works best when running Streamlit **locally**. "
-            "On Streamlit Cloud the browser cannot access your camera from the server."
-        )
+        camera_image = st.camera_input("Take a webcam photo", key="camera_input")
+        if camera_image is not None:
+            file_bytes = np.asarray(bytearray(camera_image.read()), dtype=np.uint8)
+            image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+            image = resize_frame(image, max_side=640)
+            st.image(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), caption="Captured frame")
 
-        run_cam = st.checkbox("Start webcam", value=False, key="cam_toggle")
-        cam_placeholder = st.empty()
-        cam_metrics = st.empty()
-
-        if run_cam:
-            cap = cv2.VideoCapture(0)
-            if not cap.isOpened():
-                st.error("Could not open webcam. Make sure a camera is connected.")
-            else:
-                unique_ids: Set[int] = set()
-                t0 = time.time()
-                frame_count = 0
-                stop = st.button("⏹ Stop webcam", key="stop_cam")
-
-                while run_cam and not stop:
-                    ret, frame = cap.read()
-                    if not ret:
-                        st.error("Failed to read from webcam.")
-                        break
-
-                    frame = resize_frame(frame, max_side=960)
-                    frame_count += 1
-
-                    if cfg["enable_tracking"]:
-                        results = cfg["model"].track(
-                            source=frame,
-                            conf=cfg["conf"],
-                            iou=cfg["iou"],
-                            persist=True,
-                            tracker=cfg["tracker"],
-                            verbose=False,
-                        )
-                    else:
-                        results = cfg["model"].predict(
-                            source=frame,
-                            conf=cfg["conf"],
-                            iou=cfg["iou"],
-                            verbose=False,
-                        )
-
-                    result = results[0]
-                    result = filter_result_by_classes(
-                        result, cfg["selected_classes"], cfg["class_id_map"]
+            if st.button("Detect captured frame", key="btn_camera"):
+                with st.spinner("Running fast webcam detection…"):
+                    results = cfg["model"].predict(
+                        source=image,
+                        conf=cfg["conf"],
+                        iou=cfg["iou"],
+                        imgsz=640,
+                        verbose=False,
                     )
-
+                    result = filter_result_by_classes(
+                        results[0], cfg["selected_classes"], cfg["class_id_map"]
+                    )
                     annotated = draw_detections(
-                        frame,
+                        image,
                         result,
                         show_labels=cfg["show_labels"],
                         show_conf=cfg["show_conf"],
-                        show_track_id=cfg["show_ids"] and cfg["enable_tracking"],
+                        show_track_id=False,
                     )
+                st.image(
+                    cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB),
+                    caption="Detected frame",
+                )
+                class_counts = count_classes(result)
+                render_metrics(class_counts)
+
+    # ------------------------------------------------------------------ About
+    with tab_about:
+        st.subheader("About YoloTrackX")
+        st.markdown(
+            """
+            YoloTrackX is a Streamlit computer-vision workspace for detecting and
+            tracking objects with YOLOv8.
+
+            **What it supports**
+            - Image detection with annotated image and CSV downloads
+            - Video processing with ByteTrack or BoT-SORT tracking
+            - Browser webcam capture for quick local detection
+            - Confidence, IoU, class-filter, label, and statistics controls
+
+            **Performance**
+            YOLOv8 Nano is the recommended model for live or interactive use.
+            Larger models improve accuracy but require substantially more time and
+            memory, especially without a CUDA-enabled GPU.
+            """
+        )
 
 
 if __name__ == "__main__":
