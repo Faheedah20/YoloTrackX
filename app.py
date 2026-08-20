@@ -177,6 +177,11 @@ def init_session():
 init_session()
 
 
+@st.cache_resource(show_spinner=False)
+def cached_load_model(model_name: str):
+    return load_model(model_name)
+
+
 def render_sidebar():
     st.sidebar.markdown("## 🎯 YoloTrackX")
     st.sidebar.markdown("**Multi-class Detection & Tracking**")
@@ -203,7 +208,7 @@ def render_sidebar():
         st.sidebar.info("Load a YOLO model to enable detection.")
         if st.sidebar.button("Load model", type="primary"):
             with st.spinner(f"Loading {model_label}…"):
-                st.session_state.model = load_model(model_path)
+                st.session_state.model = cached_load_model(model_path)
                 st.session_state.model_name = model_path
             st.rerun()
         return None
@@ -292,6 +297,7 @@ def run_image_inference(image: np.ndarray, cfg: dict):
         source=image,
         conf=conf,
         iou=iou,
+        imgsz=640,
         verbose=False,
     )
     result = results[0]
@@ -351,6 +357,7 @@ def process_video(
                 source=frame,
                 conf=cfg["conf"],
                 iou=cfg["iou"],
+                imgsz=640,
                 persist=True,
                 tracker=cfg["tracker"],
                 verbose=False,
@@ -360,6 +367,7 @@ def process_video(
                 source=frame,
                 conf=cfg["conf"],
                 iou=cfg["iou"],
+                imgsz=640,
                 verbose=False,
             )
 
@@ -507,7 +515,7 @@ def main():
         if uploaded is not None:
             file_bytes = np.asarray(bytearray(uploaded.read()), dtype=np.uint8)
             image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-            image = resize_frame(image, max_side=1280)
+            image = resize_frame(image, max_side=960)
 
             with col_a:
                 st.markdown("**Original**")
