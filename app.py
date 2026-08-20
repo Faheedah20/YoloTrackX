@@ -696,3 +696,7 @@ def main():
                         show_conf=cfg["show_conf"],
                         show_track_id=cfg["show_ids"] and cfg["enable_tracking"],
                     )
+
+
+if __name__ == "__main__":
+    main()
