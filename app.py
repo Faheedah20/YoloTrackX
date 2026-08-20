@@ -19,7 +19,7 @@ import streamlit as st
 from PIL import Image
 from ultralytics import YOLO
 
-from utils.helpers import (
+from utils.helper import (
     count_classes,
     draw_detections,
     draw_stats_overlay,
