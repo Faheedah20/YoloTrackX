@@ -20,20 +20,3 @@ Upload images or videos, use your webcam, filter classes, and export results —
 | 🎨 **UI** | Bright burgundy / gold / cream theme |
 
 ---
-
-## 🚀 Quick Start
-
-```bash
-# 1. Clone
-git clone https://github.com/YOUR_USERNAME/YoloTrackX.git
-cd YoloTrackX
-
-# 2. Virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate          # Windows: venv\Scripts\activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Run
-streamlit run app.py
