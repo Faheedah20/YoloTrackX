@@ -1,0 +1,42 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Model weights and generated media
+*.pt
+*.onnx
+models/*.pt
+weights/
+*.mp4
+*.avi
+*.mov
+*.mkv
+samples/*.mp4
+uploads/
+temp/
+output/
+runs/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Logs and caches
+*.log
+.cache/
+
+# Nested local checkout
+YoloTrackX/
